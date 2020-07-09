@@ -7,6 +7,7 @@ import (
   "net/http"
   "net/url"
 
+  "github.com/jinzhu/gorm"
   "github.com/gorilla/mux"
   "github.com/go-playground/validator/v10"
 )
@@ -89,7 +90,19 @@ func DeviceHandler(w http.ResponseWriter, r *http.Request) {
   case http.MethodDelete:
     log.Println("DELETE DEVICE")
 
-    if err := DB.Unscoped().Delete(&device).Error; err != nil {
+    err := DB.Transaction(func(tx *gorm.DB) error {
+      if err := tx.Unscoped().Where("device_id = ?", device.ID).Delete(&Action{}).Error; err != nil {
+        return err
+      }
+
+      if err := tx.Unscoped().Delete(&device).Error; err != nil {
+        return err
+      }
+
+      return nil
+    })
+
+    if err != nil {
       http.Error(w, err.Error(), 400)
       return
     }
