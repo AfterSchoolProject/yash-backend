@@ -1,11 +1,9 @@
 package main
 
 import (
-  "fmt"
   "encoding/json"
   "log"
   "net/http"
-  "net/url"
 
   "github.com/jinzhu/gorm"
   "github.com/gorilla/mux"
@@ -17,8 +15,8 @@ func DevicesHandler(w http.ResponseWriter, r *http.Request) {
   case http.MethodGet:
     log.Println("GET REQUEST")
     var devices []Device
-    // var actions []Action
     DB.Preload("Actions").Find(&devices)
+
     for i := 0; i < len(devices); i++ {
       device := devices[i]
       if device.Actions == nil {
@@ -113,66 +111,3 @@ func DeviceHandler(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(404)
   }
 }
-
-func postDevicesSendMessage(w http.ResponseWriter, r *http.Request) {
-  vars := mux.Vars(r)
-
-  var device Device
-  DB.First(&device, vars["id"])
-
-  // build request url
-  post_url := url.URL{
-    Scheme: "http",
-    Host: device.Host + ":" + device.Port,
-    Path: "action",
-  }
-
-  defer r.Body.Close()
-  _, err := http.Post(post_url.String(), "application/json", r.Body)
-  if err != nil {
-    fmt.Println(err)
-    http.Error(w, err.Error(), 500)
-    return
-  }
-
-  // return response 200 OK
-  w.WriteHeader(200)
-}
-
-func ActionsHandler(w http.ResponseWriter, r *http.Request) {
-  vars := mux.Vars(r)
-
-  switch r.Method {
-  case http.MethodGet:
-    var device Device
-    DB.Preload("Actions").First(&device, vars["id"])
-
-    json.NewEncoder(w).Encode(device.Actions)
-
-  case http.MethodPost:
-    log.Println("ADD ACTION")
-    var resp Action
-
-    log.Println("DECODING BODY")
-    json.NewDecoder(r.Body).Decode(&resp)
-    log.Println(resp)
-
-    var device Device
-    DB.First(&device, vars["id"])
-    if err := DB.Model(&device).Association("Actions").Append(&resp).Error; err != nil {
-      log.Println("ERROR OCCURRED")
-      log.Println(err)
-      http.Error(w, err.Error(), 400)
-      return
-    }
-
-    w.WriteHeader(201)
-    log.Println(resp)
-    json.NewEncoder(w).Encode(resp)
-
-  default:
-    w.WriteHeader(404)
-  }
-}
-
-
