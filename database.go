@@ -25,7 +25,7 @@ func SetupDatabase() *gorm.DB {
   log.Println("Database Connection Established")
 
   DB.LogMode(true)
-  DB.AutoMigrate(&Device{}, &Action{})
+  DB.AutoMigrate(&Device{}, &Action{}, &User{})
   log.Println("Finished Migration")
 
   return DB

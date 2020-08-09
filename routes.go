@@ -8,14 +8,33 @@ import (
   "github.com/gorilla/mux"
 )
 
+func Authenticate(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    session, _ := store.Get(r, "session")
+    if session.Values["Authenticated"] != true {
+      http.Error(w, "Not Authenticated", 403)
+      return
+    }
+
+    next.ServeHTTP(w, r)
+  })
+}
+
 func SetupRoutesAndRun() {
   r := mux.NewRouter()
 
-  r.HandleFunc("/devices", DevicesHandler).Methods(http.MethodGet, http.MethodPost)
-  r.HandleFunc("/devices/{id}", DeviceHandler).Methods(http.MethodPut, http.MethodGet, http.MethodDelete)
+  r.HandleFunc("/signin", SignInHandler).Methods(http.MethodPost)
 
-  r.HandleFunc("/devices/{id}/actions", ActionsHandler).Methods(http.MethodGet, http.MethodPost)
-  r.HandleFunc("/devices/{device_id}/actions/{id}", ActionHandler).Methods(http.MethodPost)
+  s := r.PathPrefix("/devices").Subrouter()
+  s.Use(Authenticate)
+
+  // Devices 
+  s.HandleFunc("", DevicesHandler).Methods(http.MethodGet, http.MethodPost)
+  s.HandleFunc("/{id}", DeviceHandler).Methods(http.MethodPut, http.MethodGet, http.MethodDelete)
+
+  // Actions
+  s.HandleFunc("/{id}/actions", ActionsHandler).Methods(http.MethodGet, http.MethodPost)
+  s.HandleFunc("/{device_id}/actions/{id}", ActionHandler).Methods(http.MethodPost)
 
   handler := cors.Default().Handler(r)
 
