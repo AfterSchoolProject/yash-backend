@@ -14,17 +14,15 @@ func DevicesHandler(w http.ResponseWriter, r *http.Request) {
   switch r.Method {
   case http.MethodGet:
     log.Println("GET REQUEST")
-    var devices []Device
-    DB.Preload("Actions").Find(&devices)
+    var user User
+    DB.Preload("Devices").Find(&user)
 
-    for i := 0; i < len(devices); i++ {
-      device := devices[i]
-      if device.Actions == nil {
-        device.Actions = []Action{}
-      }
+    for i := 0; i < len(user.Devices); i++ {
+      device := &user.Devices[i]
+      DB.Preload("Actions").Find(device)
     }
 
-    json.NewEncoder(w).Encode(devices)
+    json.NewEncoder(w).Encode(user.Devices)
 
   case http.MethodPost:
     log.Println("POST REQUEST")

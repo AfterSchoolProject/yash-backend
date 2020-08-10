@@ -9,4 +9,5 @@ type User struct {
   DeletedAt          *time.Time `json:"deleted_at" sql:"index" gorm:"column:deleted_at"`
   Login              string     `json:"login" validate:"required,unique"`
   EncryptedPassword  string     `json:"password" validate:"required"`
+  Devices            []Device   `json:"devices"`
 }

@@ -6,8 +6,6 @@ require (
 	github.com/garyburd/redigo v1.6.2 // indirect
 	github.com/go-playground/validator/v10 v10.3.0
 	github.com/go-redis/redis/v8 v8.0.0-beta.7
-	github.com/google/uuid v1.1.1
-	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/sessions v1.2.0
 	github.com/jinzhu/gorm v1.9.14

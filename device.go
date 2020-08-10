@@ -11,5 +11,6 @@ type Device struct {
   Description string     `json:"description,omitempty"`
   Host        string     `json:"host" validate:"required,hostname"`
   Port        string     `json:"port" validate:"required"`
+  UserID      uint       `json:"-"`
   Actions     []Action   `json:"actions"`
 }
