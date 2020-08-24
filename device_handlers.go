@@ -11,10 +11,20 @@ import (
 )
 
 func DevicesHandler(w http.ResponseWriter, r *http.Request) {
+  session, _ := store.Get(r, "session")
+
+  login, ok := session.Values["login"].(string)
+  if !ok {
+    log.Println("ERROR WHEN GETING SESSION")
+    http.Error(w, "Login not saved", 500)
+    return
+  }
+
+  var user User
+  DB.Where(User{Login: login}).First(&user)
+
   switch r.Method {
   case http.MethodGet:
-    log.Println("GET REQUEST")
-    var user User
     DB.Preload("Devices").Find(&user)
 
     for i := 0; i < len(user.Devices); i++ {
@@ -25,7 +35,6 @@ func DevicesHandler(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(user.Devices)
 
   case http.MethodPost:
-    log.Println("POST REQUEST")
     var device Device
     defer r.Body.Close()
     json.NewDecoder(r.Body).Decode(&device)
@@ -37,7 +46,7 @@ func DevicesHandler(w http.ResponseWriter, r *http.Request) {
       return
     }
 
-    if err := DB.Create(&device).Error; err != nil {
+    if err := DB.Model(&user).Association("Devices").Append(&device).Error; err != nil {
       http.Error(w, err.Error(), 400)
       return
     }
@@ -55,17 +64,25 @@ func DevicesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeviceHandler(w http.ResponseWriter, r *http.Request) {
+  session, _ := store.Get(r, "session")
+  login, ok := session.Values["login"].(string)
+  if !ok {
+    http.Error(w, "Login not saved", 500)
+  }
+
+  var user User
+  DB.Where(User{Login: login}).First(&user)
+
   vars := mux.Vars(r)
   var device Device
-  DB.Preload("Actions").First(&device, vars["id"])
+
+  DB.Where("user_id = ? AND id = ?", user.ID, vars["id"]).Preload("Actions").First(&device)
 
   switch r.Method {
   case http.MethodGet:
-    log.Println("GET DEVICE")
     json.NewEncoder(w).Encode(&device)
 
   case http.MethodPut:
-    log.Println("UPDATE DEVICE")
     var resp Device
 
     json.NewDecoder(r.Body).Decode(&resp)
@@ -84,8 +101,6 @@ func DeviceHandler(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(&device)
 
   case http.MethodDelete:
-    log.Println("DELETE DEVICE")
-
     err := DB.Transaction(func(tx *gorm.DB) error {
       if err := tx.Unscoped().Where("device_id = ?", device.ID).Delete(&Action{}).Error; err != nil {
         return err

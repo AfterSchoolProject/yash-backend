@@ -19,7 +19,6 @@ func init() {
 
   store.Options = &sessions.Options{
     MaxAge: 86400, // 1 day
-    HttpOnly: true,
   }
 
   log.Println("Session store initialized")

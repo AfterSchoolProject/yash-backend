@@ -37,7 +37,6 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 
   if err = session.Save(r, w); err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
-
     return
   }
 }
