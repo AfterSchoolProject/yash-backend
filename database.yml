@@ -1,0 +1,10 @@
+default: &default
+  user: root
+  database: development
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  database: yash_test

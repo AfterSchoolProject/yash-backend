@@ -3,6 +3,7 @@ package main
 import (
   "bytes"
   "encoding/json"
+  "fmt"
   "log"
   "net/http"
   "net/url"
@@ -19,13 +20,13 @@ func ActionsHandler(w http.ResponseWriter, r *http.Request) {
     var device Device
     DB.Preload("Actions").First(&device, vars["id"])
 
+    fmt.Printf("VARS ID: %s", vars["id"])
     json.NewEncoder(w).Encode(device.Actions)
 
   case http.MethodPost:
     var resp Action
 
     json.NewDecoder(r.Body).Decode(&resp)
-    log.Println(resp)
 
     var device Device
     DB.First(&device, vars["id"])
@@ -76,7 +77,7 @@ func ActionHandler(w http.ResponseWriter, r *http.Request) {
     jsonValue, err := json.Marshal(Message{Value: action.Value})
     requestBody := bytes.NewReader(jsonValue)
 
-    defer r.Body.Close()
+    fmt.Printf("URL: %s\n", postUrl.String())
     _, err = http.Post(postUrl.String(), "application/json", requestBody)
     if err != nil {
       log.Println(err)
